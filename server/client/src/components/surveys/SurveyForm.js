@@ -3,52 +3,49 @@ import React, { Component } from 'react';
 import { reduxForm, Field } from 'redux-form';
 import { Link } from 'react-router-dom';
 import SurveyField from './SurveyField';
-
-const Fields = [
-    { label: 'Survey Title', name: 'Title' },
-    { label: 'Survey Line', name: 'subject' },
-    { label: 'Email Body', name: 'body' },
-    { label: 'Recipient List', name: 'emails' }
-]
+import validateEmails from '../../utils/validateEmails';
+import formFields from './formFields';
 
 class SurveyForm extends Component {
     renderFields(){
-        return _.map(Fields, ({ label, name}) => {
+        return _.map(formFields, ({ label, name}) => {
             return <Field key={name} label={label} type="text" name={name} component={SurveyField}/>
         });
     }
 
     render(){
         return (
-            <div>
-                <form onSubmit={this.props.handleSubmit(val => console.log(val))}>
-                    {this.renderFields()}
-                    <Link to="/surveys" className='red btn-flat white-text'>
-                        Cancel
-                    </Link>
-                    <button type="submit" className="teal btn-flat right white-text">
-                        Next
-                        <i className="material-icons right">done</i>
-                    </button>
-                </form>
-            </div>
+            <form onSubmit={this.props.handleSubmit(this.props.onSurveySubmit)}>
+                {this.renderFields()}
+                <Link to="/surveys" className='red btn-flat white-text'>
+                    Cancel
+                </Link>
+                <button type="submit" className="teal btn-flat right white-text">
+                    Next
+                    <i className="material-icons right">done</i>
+                </button>
+            </form>
         );
     }
 }
 
-function validate(values){
-    console.log('values:', values);
+const validate = values => {
     const errors = {};
+
+    errors.recipients = validateEmails(values.recipients || '');
     
-    if(!values.title){
-        errors.title = 'You must provide a title';
-    }
+    _.each(formFields, ({ name }) => {
+        if(!values[name]){
+            errors[name] = 'You must provide a value';
+        }
+    });
 
     return errors;
 }
 
 export default reduxForm({
     validate,
-    form: 'surveyForm'
+    form: 'surveyForm',
+    destroyOnUnmount: false 
 })(SurveyForm);
 
